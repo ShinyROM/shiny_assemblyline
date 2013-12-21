@@ -1,0 +1,47 @@
+#!/bin/bash
+
+OPEN_LOCATION_WHEN_DONE=true
+
+if [ "${1}" = "" ]; then
+	echo "No product specified. Exiting."
+	exit
+fi
+if [ "${1}" = "all" ]; then
+	echo "Building all products."
+	# insert code here
+	exit
+fi
+
+BUILD_DEVICE=${1}
+echo ""
+echo "Building ${BUILD_DEVICE}."
+echo ""
+echo "Setting up source..."
+echo ""
+cd $SHINY_ROOT/aosp
+source build/envsetup.sh
+echo ""
+echo "Lunching for ${BUILD_DEVICE}..."
+echo ""
+lunch shiny_${BUILD_DEVICE}-user
+echo ""
+echo "Building..."
+echo ""
+DATETIME_BEGAN=$(date +"%m/%d/%y %H:%M:%S")
+make -j6 otapackage
+DATETIME_DONE=$(date +"%m/%d/%y %H:%M:%S")
+echo ""
+echo "Build of $BUILD_DEVICE complete. Started at ${DATETIME_BEGAN} and finished at ${DATETIME_DONE}."
+echo ""
+PACKAGE_DATE_DONE=$(date +"%m%d%y")
+PACKAGE_DATETIME_DONE=$(date +"%m%d%y-%H%M%S")
+echo "Verifying correct build storage archive structure..."
+echo ""
+mkdir -p ${SHINY_ROOT}/builds/${PACKAGE_DATE_DONE}/${BUILD_DEVICE}
+echo "Moving flashable ZIP to build storage archive..."
+echo ""
+mv ${SHINY_ROOT}/aosp/out/target/product/${BUILD_DEVICE}/shiny_${BUILD_DEVICE}-ota-eng.$(logname).zip ${SHINY_ROOT}/builds/${PACKAGE_DATE_DONE}/${BUILD_DEVICE}/ShinyROM_${BUILD_DEVICE}_aosp_${PACKAGE_DATETIME_DONE}-signed.zip
+echo "Procedure complete! Final product exported to ${SHINY_ROOT}/builds/${PACKAGE_DATE_DONE}/${BUILD_DEVICE}/ShinyROM_${BUILD_DEVICE}_aosp_${PACKAGE_DATETIME_DONE}-signed.zip"
+if [ "${OPEN_LOCATION_WHEN_DONE}" = "true" ]; then
+	nautilus ${SHINY_ROOT}/builds/${PACKAGE_DATE_DONE}/${BUILD_DEVICE}
+fi
